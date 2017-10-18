@@ -39,7 +39,7 @@ Example: wal -i '${HOME}/Pictures/Wallpapers/'
          wal -i '${HOME}/Pictures/1.jpg'
 
 Flags:
-  -a                      Set terminal background transparency. *Only works in URxvt*
+  -a                      Set terminal background alpha channel (vulgo: transparency). *Only works in URxvt*
   -c                      Delete all cached colorschemes.
   -f '/path/to/colors'    Load colors directly from a colorscheme file.
   -h                      Display this help page.
