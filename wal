@@ -18,6 +18,30 @@ newline=$'\n'
 color_count=16
 os="$(uname)"
 
+# Scripts, in one Array for more efficient config
+locksh="${HOME}/lock.sh"
+dmenush="${HOME}/dmenu.sh"
+scripts=( ${locksh} ${dmenush} )
+
+# Config files for Xresources, i3 / sway, i3status, termite and dunst 
+xres_file="${HOME}/.Xresources"
+
+i3_sway_config="${HOME}/.config/i3/config"
+if [[ $DESKTOP_SESSION == *"sway" ]];
+        then i3_sway_config="${HOME}/.config/sway/config"
+fi
+
+termite_config="${HOME}/.config/termite/config"
+dunstrc_file="${HOME}/.config/dunst/dunstrc"
+i3stat_config="${HOME}/.config/i3status/config"
+
+# The strings after which to insert the Colors and Wallpaper
+colors_following="#Color config"
+colors_following_xres="\!\!Color config"
+wal_following="#Wallpaper config"
+wal_following_xres="\!\!Wallpaper config"
+
+
 # GENERATE COLORSCHEME
 
 
@@ -115,6 +139,83 @@ set_color() {
     x_colors+="*.color${1}: ${2}${newline}"
 
     plain+="${2}${newline}"
+
+sway+="set \$color${1}	${2}"
+    case "$1" in    
+        0) sway+="\nset \$background	 ${2}\n" ;;
+        1) sway+="\n" ;;
+        2) sway+="\n" ;;
+        3) sway+="\n" ;;
+        4) sway+="\n" ;;
+        5) sway+="\n" ;;
+        6) sway+="\n" ;;
+ 	7) sway+="\nset \$foreground	 ${2}\n" ;;
+        8) sway+="\n" ;;
+        9) sway+="\n" ;;
+        10) sway+="\n" ;;
+        11) sway+="\n" ;;
+        12) sway+="\n" ;;
+        13) sway+="\n" ;;
+        14) sway+="\n" ;;
+    esac
+   
+    xres+="*color${1}: ${2}" 
+    case "$1" in    
+        0) xres+="\n*background: ${2}\n" ;;
+        1) xres+="\n" ;;
+        2) xres+="\n" ;;
+        3) xres+="\n" ;;
+        4) xres+="\n" ;;
+        5) xres+="\n" ;;
+        6) xres+="\n" ;;
+ 	7) xres+="\n*foreground: ${2}\n" ;;
+        8) xres+="\n" ;;
+        9) xres+="\n" ;;
+        10) xres+="\n" ;;
+        11) xres+="\n" ;;
+        12) xres+="\n" ;;
+        13) xres+="\n" ;;
+        14) xres+="\n" ;;
+    esac
+
+    termite+="color${1} = ${2}"
+   
+    case "$1" in    
+        0) termite+="\nbackground = ${2}\n" ;;
+        1) termite+="\n" ;;
+        2) termite+="\n" ;;
+        3) termite+="\n" ;;
+        4) termite+="\n" ;;
+        5) termite+="\n" ;;
+        6) termite+="\n" ;;
+ 	7) termite+="\nforeground = ${2}\n" ;;
+        8) termite+="\n" ;;
+        9) termite+="\n" ;;
+        10) termite+="\n" ;;
+        11) termite+="\n" ;;
+        12) termite+="\n" ;;
+        13) termite+="\n" ;;
+        14) termite+="\n" ;;
+    esac
+    
+    lock+="color${1}=${2}"
+    case "$1" in
+	0) lock+="\n" ;;
+	1) lock+="\n" ;;
+        2) lock+="\n" ;;
+	3) lock+="\n" ;;
+	4) lock+="\n" ;;
+	5) lock+="\n" ;;
+	6) lock+="\n" ;;
+	7) lock+="\n" ;;
+	8) lock+="\n" ;;
+	9) lock+="\n" ;;
+	10) lock+="\n" ;;
+	11) lock+="\n" ;;
+	12) lock+="\n" ;;
+	13) lock+="\n" ;;
+	14) lock+="\n" ;;
+    esac
 }
 
 set_special() {
@@ -307,6 +408,113 @@ export_xrdb() {
     out "export: Exported xrdb colors"
 }
 
+# export colors into the .Xresources file, inserting after !!Color comment
+export_xres() {	
+    if grep -q "${colors_following_xres}" ${xres_file}; then
+	echo Yep
+    else
+	echo ${xres} >> ${xres_file}	
+    fi	
+    sed -i "/${colors_following_xres} ${xres}" ${xres_file} 
+    out "export: Exported colors into Xresources"
+}
+
+# export colors into the i3 or sway configuration files, inserting at the top
+export_i3_sway() {	
+    if grep -q "${colors_following}" ${i3_sway_config}; then
+	echo Yep
+    else
+	sed -i "/reference/a ${colors_following}" ${i3_sway_config}
+    fi	
+    sed -i "/${colors_following}/a ${sway}" ${i3_sway_config} 
+    out "export: Exported colors into Xresources"
+}
+
+# export colors into the termite configuration file in the [colors] section
+export_termite() {
+    sed -i "/\[colors\]/a ${termite}" ${termite_config}
+    out "export: Exported colors into termite config file"	   
+}
+
+# export colors into the config for the dunst notification daemon for automated adjustment
+export_dunst() {
+    sed -i "/^color/ s/\#[[:alnum:]]\{6\}/${colors[7]}/" $dunstrc
+
+    sed -i "/^foreground/ s/\#[[:alnum:]]\{6\}/${colors[14]}/" $dunstrc
+
+    sed -i "/^background/ s/\#[[:alnum:]]\{6\}/${colors[0]}/" $dunstrc
+    out "export: Exported colors into Dunst Config"
+}
+
+# export colors into the config for the i3status module for automated adjustment
+export_status() {
+    sed -i "/color_good/ s/\#[[:alnum:]]\{6\}/${colors[15]}/" ${i3stat_config}
+	#12
+    sed -i "/color_bad/ s/\#[[:alnum:]]\{6\}/${colors[8]}/" ${i3stat_config}
+	#6
+    sed -i "/color_degraded/ s/\#[[:alnum:]]\{6\}/${colors[2]}/" ${i3stat_config}
+        #3
+    out "export: Exported colors into i3status Config"
+}
+
+# export colors into both lock.sh for i3/swaylock and dmenu.sh
+export_scripts() {
+    for s in "${scripts[@]}"
+    do
+	echo ${s}
+    	if grep -q "${colors_following}" ${s}; then
+		echo Yep
+	    else
+		sed -i "/#\!\/bin\/bash/a ${colors_following}" ${s}
+        fi	
+    	sed -i "/${colors_following}/a ${lock}" ${s} 
+    	sed -i "/${colors_following}/a wal=${wal}" ${s}
+    	out "export: Exported colors into script for i3lock"
+    done
+}
+
+# exporting wallpaper. 
+export_wal() { 
+    # sed -i "/${wal_following_xres}/a \*wal: ${wal}" $xres_file
+    sed -i "/${wal_following}/a set \$wal ${wal}" $i3_sway_config
+    out "export: Exported colors for rofi into Xresources"
+}
+
+export_rofi_xres() {
+    
+    rofi="rofi.color-enabled: true\n"
+    rofi+="rofi.color-window: ${colors[0]}, ${colors[0]}, ${colors[10]}\n"
+    rofi+="rofi.color-normal: ${colors[0]}, ${colors[15]}, ${colors[0]}, ${colors[10]}, ${colors[0]}\n"
+    rofi+="rofi.color-active: ${colors[0]}, ${colors[15]}, ${colors[0]}, ${colors[10]}, ${colors[0]}\n"
+    rofi+="rofi.color-urgent: ${colors[0]}, ${colors[9]}, ${colors[0]}, ${colors[9]}, ${colors[15]}\n"
+    rofi+="rofi.separator-style: solid"
+  
+    sed -i "/\!\!Rofi*/a ${rofi}" ${xres_file}
+    out "export: Exported colors for rofi into Xresources"
+}
+
+# delete the previos color configuration from all configuration files
+garbage_collection () {
+    sed -i "/\*wal*/d" ${xres_file}  
+    sed -i "/\**ground*/d" ${xres_file}
+    sed -i "/^foreground*/d" ${termite_config}
+    sed -i "/^background*/d" ${termite_config}
+    sed -i "/^color[0-9]/d" ${termite_config}
+    
+    sed -i "/^set \$color[0-9]*/d" ${i3_sway_config}
+    sed -i "/^set \$foreground*/d" ${i3_sway_config}
+    sed -i "/^set \$background*/d" ${i3_sway_config}
+    sed -i "/^set \$wal*/d" ${i3_sway_config}
+
+    sed -i "/\*col*/d" ${xres_file}
+    sed -i "/rofi.*/d" ${xres_file}
+     
+    for s in "${scripts[@]}"
+    do
+    	sed -i "/^.*=#[[:alnum:]]\{6\}$/d" ${s}
+    	sed -i "/^.*\.[jpegnif]\{3,4\}$/d" ${s}
+    done
+}
 export_colors() {
     export_sequences > "${cache_dir}/sequences"
     export_envar     > "${cache_dir}/colors.sh"
@@ -317,9 +525,14 @@ export_colors() {
     export_plain     > "${cache_dir}/colors"
     export_xrdb      > "${cache_dir}/colors.xresources"
     export_putty     > "${cache_dir}/colors.reg"
+    garbage_collection
+    export_i3_sway
+    export_termite
+    export_wal
+    export_dunst
+    export_status
+    export_scripts
 }
-
-
 # RELOAD COLORSCHEME
 
 
